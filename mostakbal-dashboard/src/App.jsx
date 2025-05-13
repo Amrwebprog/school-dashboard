@@ -3,6 +3,7 @@ import SideMenue from './components/side-menue';
 import './App.scss';
 import TrashMenue from './components/TrashMenue';
 import Login from './components/Login';
+import WebsiteControler from './components/websiteControler';
 
 export default function App() {
   const [userType, setUserType] = useState(localStorage.getItem("userType"));
@@ -21,11 +22,17 @@ export default function App() {
 
   return (
     <div>
+      
       {userType === 'owner' ? (
         <SideMenue />
       ) : userType === 'Employee' ? (
         <TrashMenue />
-      ) : (
+      ) :
+      userType === 'media' ? (
+        <WebsiteControler />
+      ):
+      
+      (
         <Login />
       )}
     </div>

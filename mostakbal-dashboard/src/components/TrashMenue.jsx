@@ -171,7 +171,7 @@ export default function SideMenue() {
       html:
         `<div class"col-8 d-flex justify-content-center align-items-center gap-3">` +
         `<input value="${studentData.studentname}" id="swal-input1" class="swal2-input col-6 mb-5" placeholder="Student Name">` +
-        `<select class="col-12">
+        `<select class="col-12" id="swal-input2">
                 ${classes.map((el, idx) => {
                   return `<option key=${idx} value=${el} key={idx}>
                         ${el}
@@ -709,15 +709,44 @@ export default function SideMenue() {
 
   const handleDownloadPDF = (event) => {
     event.preventDefault();
-
+  
     if (docRef.current) {
-      html2canvas(docRef.current, { scale: 2 }) // استخدم معامل تكبير
+      const element = docRef.current;
+  
+      html2canvas(element, {
+        scale: 3, // تحسين الجودة
+        useCORS: true, // للسماح بالصور الخارجية
+        allowTaint: false, // لتجنب مشاكل التعتيم
+      })
         .then((canvas) => {
           const imgData = canvas.toDataURL("image/png");
-          const pdf = new jsPDF();
-
-          // ضبط الأبعاد بشكل دقيق
-          pdf.addImage(imgData, "PNG", 0, 0, 210, 297);
+  
+          // إعداد PDF بحجم يناسب `100vh × 100vh`
+          const pdf = new jsPDF("portrait", "mm", "a4");
+          const pageWidth = pdf.internal.pageSize.getWidth();
+          const pageHeight = pdf.internal.pageSize.getHeight();
+  
+          // نسبة العرض إلى الارتفاع للـ `div`
+          const elementRatio = canvas.width / canvas.height;
+          const pdfRatio = pageWidth / pageHeight;
+  
+          let imgWidth, imgHeight;
+  
+          if (elementRatio > pdfRatio) {
+            // إذا كان العرض أكبر، اضبط العرض ليملأ الصفحة
+            imgWidth = pageWidth;
+            imgHeight = (pageWidth / canvas.width) * canvas.height;
+          } else {
+            // إذا كان الطول أكبر، اضبط الطول ليملأ الصفحة
+            imgHeight = pageHeight;
+            imgWidth = (pageHeight / canvas.height) * canvas.width;
+          }
+  
+          // أضف الصورة إلى PDF مع محاذاة مركزية
+          const xOffset = (pageWidth - imgWidth) / 2;
+          const yOffset = (pageHeight - imgHeight) / 2;
+  
+          pdf.addImage(imgData, "PNG", xOffset, yOffset, imgWidth, imgHeight);
           pdf.save("download.pdf");
         })
         .catch((error) => {
@@ -727,7 +756,7 @@ export default function SideMenue() {
       console.error("docRef.current is null or undefined");
     }
   };
-
+  
   useEffect(() => {
     AOS.init();
   }, []);

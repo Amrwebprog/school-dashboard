@@ -2,7 +2,7 @@ import React, { useRef, useState } from 'react';
 import { collection, query, getDocs } from 'firebase/firestore';
 import { db } from '../firestoredb';
 import Swal from 'sweetalert2';
-import { Paper, Checkbox } from '@mui/material'; // تأكد من استيراد Checkbox هنا
+import { Paper, Checkbox, TextField } from '@mui/material'; // تأكد من استيراد TextField هنا
 import { DataGrid } from '@mui/x-data-grid';
 
 export default function OwnerShowEmployee() {
@@ -10,6 +10,7 @@ export default function OwnerShowEmployee() {
     const [loading, setLoading] = useState(false);
     const ChosenDate = useRef();
     const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 25 });
+    const [searchQuery, setSearchQuery] = useState(''); // حالة لتخزين نص البحث
 
     const columns = [
         {
@@ -34,18 +35,18 @@ export default function OwnerShowEmployee() {
     const GetEmployee = async (e) => {
         e.preventDefault();
         setLoading(true);
-    
+
         try {
             const chosenDate = ChosenDate.current.value;
             const collectionName = "Employee_" + chosenDate; // Assuming this is the correct collection structure
             const q = query(collection(db, collectionName));
             const querySnapshot = await getDocs(q);
-    
+
             const employees = querySnapshot.docs.map((doc) => ({
                 id: doc.id,
                 ...doc.data(),
             }));
-    
+
             setEmployeeData(employees);
 
             if (employees.length > 0) {
@@ -72,6 +73,13 @@ export default function OwnerShowEmployee() {
         }
     };
 
+    // وظيفة لتصفية البيانات بناءً على نص البحث
+    const filteredEmployeeData = employeeData.filter((employee) =>
+        employee.employeeName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        employee.branch.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        employee.title.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
     return (
         <>
             <div className="d-flex flex-wrap flex-column col-12 justify-content-center align-items-center">
@@ -84,10 +92,20 @@ export default function OwnerShowEmployee() {
                 )}
                 <h1>Enter Date To Display Employee Attendance</h1>
                 <input type="date" ref={ChosenDate} onChange={GetEmployee} />
-                
+
+                {/* حقل البحث */}
+                <TextField
+                    label="Search"
+                    variant="outlined"
+                    fullWidth
+                    margin="normal"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                />
+
                 <Paper sx={{ width: '100%', marginTop: '20px' }}>
                     <DataGrid
-                        rows={employeeData.map((employee) => ({
+                        rows={filteredEmployeeData.map((employee) => ({
                             id: employee.id,
                             attendance: employee.attendance,
                             attendanceReason: employee.attendanceReason,
